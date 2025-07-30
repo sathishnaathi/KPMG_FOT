@@ -1,0 +1,55 @@
+name: Automate Repo Setup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout workflow repo
+        uses: actions/checkout@v3
+
+      - name: Set up GitHub CLI
+        uses: cli/cli-action@v2
+
+      - name: Create repository
+        run: bash scripts/create-repo.sh
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+
+  checkin-file:
+    needs: create-repo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout workflow repo
+        uses: actions/checkout@v3
+
+      - name: Check in README.md
+        run: bash scripts/checkin-file.sh
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+
+  create-branch:
+    needs: checkin-file
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout workflow repo
+        uses: actions/checkout@v3
+
+      - name: Create feature branch
+        run: bash scripts/create-branch.sh
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+
+  protect-branch:
+    needs: create-branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout workflow repo
+        uses: actions/checkout@v3
+
+      - name: Enable branch protection
+        run: bash scripts/protect-branch.sh
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
