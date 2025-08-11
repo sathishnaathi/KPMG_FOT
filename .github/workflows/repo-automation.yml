@@ -1,55 +1,26 @@
-name: Automate Repo Setup
+name: GitHub Repo Automation
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger
 
 jobs:
-  create-repo:
+  automate-repo:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout workflow repo
-        uses: actions/checkout@v3
+    - name: Checkout this repo
+      uses: actions/checkout@v3
 
-      - name: Set up GitHub CLI
-        uses: cli/cli-action@v2
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
 
-      - name: Create repository
-        run: bash scripts/create-repo.sh
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+    - name: Install dependencies
+      run: pip install requests
 
-  checkin-file:
-    needs: create-repo
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout workflow repo
-        uses: actions/checkout@v3
-
-      - name: Check in README.md
-        run: bash scripts/checkin-file.sh
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-
-  create-branch:
-    needs: checkin-file
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout workflow repo
-        uses: actions/checkout@v3
-
-      - name: Create feature branch
-        run: bash scripts/create-branch.sh
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-
-  protect-branch:
-    needs: create-branch
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout workflow repo
-        uses: actions/checkout@v3
-
-      - name: Enable branch protection
-        run: bash scripts/protect-branch.sh
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+    - name: Run Python script to automate repo setup      
+      env:
+        REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
+        REPO_USER: ${{ secrets.REPO_USER }}
+      run: python scripts/setup_repo.py
